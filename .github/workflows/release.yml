@@ -1,0 +1,60 @@
+name: build
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        run: dotnet restore src/LookUp/LookUp.csproj
+
+      - name: Build
+        run: dotnet build src/LookUp/LookUp.csproj -c Release --no-restore
+
+      # ---- everything below only runs when a v* tag is pushed ----
+
+      - name: Publish (self-contained, single file)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: >
+          dotnet publish src/LookUp/LookUp.csproj -c Release -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          -p:PublishReadyToRun=true
+          -p:DebugType=none
+          -o publish/win-x64
+
+      - name: Package zip
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          Copy-Item README.md  publish/win-x64/README.md
+          Copy-Item LICENSE    publish/win-x64/LICENSE
+          Compress-Archive -Path publish/win-x64/* -DestinationPath LookUp-win-x64.zip -Force
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            LookUp-win-x64.zip
+            publish/win-x64/LookUp.exe

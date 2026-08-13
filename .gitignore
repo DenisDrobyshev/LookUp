@@ -1,0 +1,26 @@
+# .NET build output
+bin/
+obj/
+dist/
+publish/
+out/
+
+# Rider / VS / VS Code
+.vs/
+.idea/
+*.user
+*.suo
+*.userprefs
+.vscode/
+
+# OS junk
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# NuGet
+*.nupkg
+packages/
+
+# Local test artifacts
+*.selftest.txt
