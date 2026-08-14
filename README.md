@@ -17,6 +17,8 @@ your clipboard. No cloud, no upload — recognition runs locally on Windows.
 
 **English** · [Русский](README.ru.md)
 
+<img src="assets/demo.gif" width="720" alt="Drag a box over text inside an image and the recognized text lands in the clipboard" />
+
 </div>
 
 ---
