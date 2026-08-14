@@ -13,8 +13,8 @@
     <RootNamespace>LookUp</RootNamespace>
     <Product>LookUp</Product>
     <Company>DenisDrobyshev</Company>
-    <Version>1.0.0</Version>
-    <FileVersion>1.0.0.0</FileVersion>
+    <Version>1.0.1</Version>
+    <FileVersion>1.0.1.0</FileVersion>
     <Description>Grab any text on your screen. Select a region, get the recognized text in your clipboard.</Description>
 
     <ApplicationIcon>..\..\assets\lookup.ico</ApplicationIcon>
