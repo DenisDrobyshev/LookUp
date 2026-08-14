@@ -14,8 +14,9 @@ internal sealed class AppSettings
     public string Hotkey { get; set; } = HotkeySpec.Default.ToString();
 
     /// <summary>
-    /// BCP-47 language tag to bias OCR (e.g. "en", "ru"). Empty = follow the
-    /// Windows display language / installed OCR languages automatically.
+    /// BCP-47 language tag to pin OCR to a fixed language (e.g. "en", "ru"). Empty =
+    /// Auto: follow the keyboard layout active at capture time, falling back to the
+    /// Windows display language when that layout has no OCR recognizer installed.
     /// </summary>
     public string Language { get; set; } = "";
 

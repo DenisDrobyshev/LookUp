@@ -15,7 +15,9 @@ internal readonly struct HotkeySpec(uint modifiers, Keys key)
     public uint Modifiers { get; } = modifiers;
     public Keys Key { get; } = key;
 
-    public static HotkeySpec Default => new(ModControl | ModShift, Keys.D);
+    // Win+Shift+D mirrors the built-in Win+Shift+S screenshot shortcut: same
+    // "drag a region" gesture, but the region comes back as text, not an image.
+    public static HotkeySpec Default => new(ModWin | ModShift, Keys.D);
 
     public static bool TryParse(string? text, out HotkeySpec spec)
     {
@@ -55,10 +57,11 @@ internal readonly struct HotkeySpec(uint modifiers, Keys key)
     public override string ToString()
     {
         var parts = new List<string>(4);
+        // Win first, matching how Windows writes its own shortcuts (e.g. Win+Shift+S).
+        if ((Modifiers & ModWin) != 0) parts.Add("Win");
         if ((Modifiers & ModControl) != 0) parts.Add("Ctrl");
         if ((Modifiers & ModAlt) != 0) parts.Add("Alt");
         if ((Modifiers & ModShift) != 0) parts.Add("Shift");
-        if ((Modifiers & ModWin) != 0) parts.Add("Win");
         parts.Add(Key.ToString());
         return string.Join("+", parts);
     }

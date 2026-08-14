@@ -15,25 +15,42 @@ namespace LookUp.Ocr;
 /// </summary>
 internal sealed class WindowsOcrEngine : IOcrEngine
 {
-    private readonly OcrEngine? _engine;
+    private readonly string? _pinnedLanguageTag;
     private readonly bool _keepLineBreaks;
 
-    public WindowsOcrEngine(string? preferredLanguageTag = null, bool keepLineBreaks = true)
+    /// <summary>
+    /// Fallback engine, used when no language is pinned and the capture-time hint
+    /// doesn't map to an installed recognizer. Follows the Windows profile.
+    /// </summary>
+    private readonly OcrEngine? _defaultEngine;
+
+    /// <summary>Engines built on demand per language tag, so switching is instant.</summary>
+    private readonly Dictionary<string, OcrEngine?> _byLanguage =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    public WindowsOcrEngine(string? pinnedLanguageTag = null, bool keepLineBreaks = true)
     {
         _keepLineBreaks = keepLineBreaks;
-        _engine = CreateEngine(preferredLanguageTag);
+        _pinnedLanguageTag = string.IsNullOrWhiteSpace(pinnedLanguageTag)
+            ? null
+            : pinnedLanguageTag.Trim();
+        _defaultEngine = CreateDefaultEngine(_pinnedLanguageTag);
     }
 
-    public bool IsAvailable => _engine is not null;
+    public bool IsAvailable => _defaultEngine is not null;
 
-    private static OcrEngine? CreateEngine(string? preferredLanguageTag)
+    /// <summary>
+    /// Builds the fallback engine: an explicitly pinned language if installed,
+    /// otherwise the Windows profile languages, otherwise anything available.
+    /// </summary>
+    private static OcrEngine? CreateDefaultEngine(string? pinnedLanguageTag)
     {
         // 1) Explicit preference from settings, if that language is installed.
-        if (!string.IsNullOrWhiteSpace(preferredLanguageTag))
+        if (!string.IsNullOrWhiteSpace(pinnedLanguageTag))
         {
             try
             {
-                var lang = new Language(preferredLanguageTag);
+                var lang = new Language(pinnedLanguageTag);
                 if (OcrEngine.IsLanguageSupported(lang))
                 {
                     var byPref = OcrEngine.TryCreateFromLanguage(lang);
@@ -63,9 +80,69 @@ internal sealed class WindowsOcrEngine : IOcrEngine
         return null;
     }
 
-    public async Task<string> RecognizeAsync(Bitmap image)
+    /// <summary>
+    /// Picks which engine handles this capture. A pinned language always wins;
+    /// otherwise the capture-time hint (keyboard layout) chooses the script, with
+    /// the profile engine as a safety net.
+    /// </summary>
+    private OcrEngine? ResolveEngine(string? contextLanguageTag)
     {
-        if (_engine is null)
+        if (_pinnedLanguageTag is not null)
+            return _defaultEngine; // user chose a fixed language — honor it
+
+        if (string.IsNullOrWhiteSpace(contextLanguageTag))
+            return _defaultEngine;
+
+        return GetOrCreateForLanguage(contextLanguageTag!) ?? _defaultEngine;
+    }
+
+    private OcrEngine? GetOrCreateForLanguage(string tag)
+    {
+        if (_byLanguage.TryGetValue(tag, out var cached))
+            return cached;
+
+        OcrEngine? engine = BuildForLanguage(tag);
+        _byLanguage[tag] = engine; // cache the miss too, so we don't retry every capture
+        return engine;
+    }
+
+    /// <summary>
+    /// Finds an installed recognizer matching <paramref name="tag"/> — first by exact
+    /// tag ("ru-RU"), then by primary language ("ru" also matches "ru-RU"; "en"
+    /// matches "en-US"/"en-GB"). Returns null if that language isn't installed.
+    /// </summary>
+    private static OcrEngine? BuildForLanguage(string tag)
+    {
+        string primary = PrimaryLanguage(tag);
+
+        OcrEngine? FirstMatch(Func<Language, bool> predicate)
+        {
+            foreach (var lang in OcrEngine.AvailableRecognizerLanguages)
+            {
+                if (!predicate(lang))
+                    continue;
+                var engine = OcrEngine.TryCreateFromLanguage(lang);
+                if (engine is not null)
+                    return engine;
+            }
+            return null;
+        }
+
+        return FirstMatch(l => string.Equals(l.LanguageTag, tag, StringComparison.OrdinalIgnoreCase))
+            ?? FirstMatch(l => string.Equals(
+                PrimaryLanguage(l.LanguageTag), primary, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string PrimaryLanguage(string tag)
+    {
+        int dash = tag.IndexOf('-');
+        return dash > 0 ? tag[..dash] : tag;
+    }
+
+    public async Task<string> RecognizeAsync(Bitmap image, string? contextLanguageTag = null)
+    {
+        var engine = ResolveEngine(contextLanguageTag);
+        if (engine is null)
             throw new InvalidOperationException(
                 "No OCR language is installed. Add one in Windows Settings → " +
                 "Time & Language → Language & region → (language) → Options → " +
@@ -75,7 +152,7 @@ internal sealed class WindowsOcrEngine : IOcrEngine
         var software = ToSoftwareBitmap(prepared);
         try
         {
-            var result = await _engine.RecognizeAsync(software);
+            var result = await engine.RecognizeAsync(software);
             return Flatten(result);
         }
         finally

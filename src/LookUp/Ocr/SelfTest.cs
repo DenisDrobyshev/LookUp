@@ -46,6 +46,20 @@ internal static class SelfTest
                 Line($"Recognized(en-US): {en.Replace(Environment.NewLine, " / ")}");
             }
 
+            // The real fix: an un-pinned (Auto) engine should honor the capture-time
+            // language hint (normally the keyboard layout) and route Latin text to the
+            // Latin recognizer, even on a machine whose default engine is Cyrillic.
+            bool enInstalled = OcrEngine.AvailableRecognizerLanguages
+                .Any(l => l.LanguageTag.StartsWith("en", StringComparison.OrdinalIgnoreCase));
+            if (enInstalled)
+            {
+                string hinted = await engine.RecognizeAsync(bitmap, "en-US");
+                Line($"Recognized(auto + en-US hint): {hinted.Replace(Environment.NewLine, " / ")}");
+                Line(hinted.Contains("Hello", StringComparison.Ordinal)
+                    ? "Language routing: OK (hint switched to the Latin recognizer)"
+                    : "Language routing: check — hint did not read Latin cleanly");
+            }
+
             bool digitsOk = recognized.Contains("12345");
             bool wordOk = recognized.Contains("LookUp", StringComparison.OrdinalIgnoreCase)
                           || recognized.Contains("Look", StringComparison.OrdinalIgnoreCase);

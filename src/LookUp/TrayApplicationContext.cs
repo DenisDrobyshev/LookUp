@@ -78,8 +78,10 @@ internal sealed class TrayApplicationContext : ApplicationContext
     }
 
     /// <summary>
-    /// Windows OCR recognizes one language per pass, so let the user pick which
-    /// installed language to use (or "Auto" to follow the Windows display language).
+    /// Windows OCR recognizes one language per pass. In "Auto" mode LookUp follows
+    /// the keyboard layout active at capture time (so an ambiguous Latin/Cyrillic
+    /// capture is read in the script you're typing in); users can also pin a fixed
+    /// installed language to override that.
     /// </summary>
     private ToolStripMenuItem BuildLanguageMenu()
     {
@@ -96,7 +98,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
             root.DropDownItems.Add(item);
         }
 
-        AddItem("Auto (follow Windows)", "");
+        AddItem("Auto (follow keyboard layout)", "");
         root.DropDownItems.Add(new ToolStripSeparator());
         foreach (var lang in Windows.Media.Ocr.OcrEngine.AvailableRecognizerLanguages)
             AddItem(lang.DisplayName, lang.LanguageTag);
@@ -117,6 +119,11 @@ internal sealed class TrayApplicationContext : ApplicationContext
         if (_capturing) return;
         _capturing = true;
 
+        // Sample the keyboard layout now, while the app the user is reading is still
+        // in the foreground — before our own overlay steals focus. This tells the OCR
+        // engine whether to read ambiguous glyphs as Latin or Cyrillic.
+        string? layoutTag = KeyboardLayout.ForegroundInputLanguageTag();
+
         Bitmap? screenshot = null;
         try
         {
@@ -130,7 +137,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
                 return; // cancelled or too small to be meaningful
 
             using var crop = ScreenCapture.Crop(screenshot, region.Value);
-            string text = await _ocr.RecognizeAsync(crop);
+            string text = await _ocr.RecognizeAsync(crop, layoutTag);
 
             if (string.IsNullOrWhiteSpace(text))
             {

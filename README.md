@@ -15,6 +15,8 @@ your clipboard. No cloud, no upload — recognition runs locally on Windows.
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%20%2F%2011-0078D6)
 
+**English** · [Русский](README.ru.md)
+
 </div>
 
 ---
@@ -43,29 +45,48 @@ instead of an image, you get the **text**, ready to paste.
 2. Download `LookUp-win-x64.zip` (self-contained — **no .NET install required**).
 3. Unzip anywhere and run `LookUp.exe`. A small icon appears in the system tray.
 
-> Windows SmartScreen may warn about a new unsigned app the first time — click
-> **More info → Run anyway**. The app is open source; you can also build it
-> yourself (see below).
+### About the SmartScreen warning
+
+Because LookUp is a new app that isn't code-signed yet, Windows SmartScreen may
+show **"Windows protected your PC"** the first time you run it. That's expected
+for any small independent tool — click **More info → Run anyway**.
+
+You don't have to take that on faith:
+
+- The full source is in this repo, and you can **build the exact same binary
+  yourself** (see [Build from source](#build-from-source)).
+- It runs **fully offline** — no network calls, no accounts.
+- Every release ships a `SHA256SUMS.txt`. Confirm your download matches it:
+
+  ```powershell
+  Get-FileHash .\LookUp.exe -Algorithm SHA256
+  ```
 
 ## Usage
 
 | Action | How |
 | --- | --- |
-| **Capture text** | Press `Ctrl + Shift + D`, then drag a box over the text. |
+| **Capture text** | Press `Win + Shift + D`, then drag a box over the text. |
 | Cancel a capture | `Esc` or right-click while selecting. |
 | Capture (no hotkey) | Double-click the tray icon. |
 | Change OCR language | Tray menu → **OCR language**. |
 | Run at startup | Tray menu → **Run at Windows startup**. |
 | Quit | Tray menu → **Quit LookUp**. |
 
-The default hotkey is **`Ctrl + Shift + D`** rather than `Win + Shift + S`,
-because Windows reserves the latter for its own screenshot tool.
+The default hotkey is **`Win + Shift + D`** — the same gesture as Windows'
+built-in `Win + Shift + S` screenshot tool, but the region comes back as text
+instead of an image. If another app already owns the combo, LookUp falls back to
+double-clicking the tray icon and you can set a different **Hotkey** in settings.
 
 ### First-time OCR note
 
-Windows recognizes one language per capture. LookUp follows your Windows
-display language by default; if you mostly grab English text on a non-English
-system, open the tray menu → **OCR language** and pick it once.
+Windows recognizes one language per capture. In **Auto** mode LookUp reads each
+capture in the script of your **active keyboard layout** — so with the English
+layout on, text made of letters shared by both alphabets (like `CAT` / `САТ`) is
+read as Latin; switch to the Russian layout and the same shapes are read as
+Cyrillic. Digits are identical either way. To lock one language regardless of
+layout, pick it in the tray menu → **OCR language**. (Auto falls back to your
+Windows display language if the current layout has no OCR recognizer installed.)
 
 To add a language pack: **Windows Settings → Time & Language → Language & region
 → (your language) → Language options → Optical character recognition**.
@@ -76,7 +97,7 @@ Editable JSON at `%APPDATA%\LookUp\settings.json` (tray menu → **Edit settings
 
 ```json
 {
-  "Hotkey": "Ctrl+Shift+D",
+  "Hotkey": "Win+Shift+D",
   "Language": "",
   "KeepLineBreaks": true
 }
@@ -84,7 +105,8 @@ Editable JSON at `%APPDATA%\LookUp\settings.json` (tray menu → **Edit settings
 
 - **Hotkey** — any combo of `Ctrl` / `Alt` / `Shift` / `Win` plus a key, e.g.
   `Ctrl+Shift+2` or `Alt+Q`.
-- **Language** — a BCP-47 tag like `en` or `ru`. Empty = follow Windows.
+- **Language** — a BCP-47 tag like `en` or `ru` to pin one language. Empty =
+  Auto (follow the active keyboard layout).
 - **KeepLineBreaks** — keep line breaks (`true`) or join everything into one
   line (`false`).
 
@@ -131,16 +153,6 @@ language packs Windows already has. The OCR backend sits behind a small
 - [ ] Per-monitor-DPI capture for pixel-perfect grabs on mixed-DPI setups.
 
 Ideas and issues welcome.
-
-## По-русски
-
-**LookUp** — лёгкая утилита в трее: нажимаешь горячую клавишу, выделяешь область
-на экране (как в «Ножницах»), и вместо картинки в буфер обмена попадает
-**распознанный текст**. Работает локально на встроенном OCR Windows 10/11 —
-без интернета и аккаунтов, распознаёт русский, английский и другие
-установленные языки. Горячая клавиша по умолчанию — `Ctrl + Shift + D`
-(`Win + Shift + S` занята системными «Ножницами»). Язык распознавания
-переключается в меню трея одним кликом.
 
 ## License
 
