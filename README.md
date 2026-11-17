@@ -32,14 +32,14 @@ instead of an image, you get the **text**, ready to paste.
 
 ## Features
 
-- 🖱️ **Snip-to-text** — the familiar drag-a-rectangle capture, across all monitors.
-- ⚡ **Fast & local** — uses the OCR engine built into Windows 10/11. Nothing is
+- Snip-to-text: the familiar drag-a-rectangle capture, across all monitors.
+- Fast & local: uses the OCR engine built into Windows 10/11. Nothing is
   sent anywhere; no API keys, no accounts.
-- 🌍 **Multi-language** — recognizes any language you've installed OCR for
+- Multi-language: recognizes any language you've installed OCR for
   (English, Russian, …). Switch in one click from the tray.
-- 🪶 **Lightweight** — a single tray app. One global hotkey, out of your way.
-- 📋 **Straight to clipboard** — capture, then `Ctrl + V` wherever you need it.
-- 🔁 **Run at startup** — optional, toggled from the tray menu.
+- Lightweight: a single tray app. One global hotkey, out of your way.
+- Straight to clipboard: capture, then `Ctrl + V` wherever you need it.
+- Run at startup: optional, toggled from the tray menu.
 
 ## Download
 
@@ -105,11 +105,11 @@ Editable JSON at `%APPDATA%\LookUp\settings.json` (tray menu → **Edit settings
 }
 ```
 
-- **Hotkey** — any combo of `Ctrl` / `Alt` / `Shift` / `Win` plus a key, e.g.
+- Hotkey: any combo of `Ctrl` / `Alt` / `Shift` / `Win` plus a key, e.g.
   `Ctrl+Shift+2` or `Alt+Q`.
-- **Language** — a BCP-47 tag like `en` or `ru` to pin one language. Empty =
+- Language: a BCP-47 tag like `en` or `ru` to pin one language. Empty =
   Auto (follow the active keyboard layout).
-- **KeepLineBreaks** — keep line breaks (`true`) or join everything into one
+- KeepLineBreaks: keep line breaks (`true`) or join everything into one
   line (`false`).
 
 ## Build from source
